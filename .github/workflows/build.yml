@@ -1,24 +1,43 @@
 name: Build CSS
+
 on:
   push:
-    paths: ['users.json']
+    paths:
+      - 'users.json'
+      - 'decorations.json'
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
+
       - name: Generate CSS
         run: |
           python3 - << 'EOF'
           import json
+
+          css = ""
+
+          # avatars
           with open('users.json') as f:
               users = json.load(f)
-          css = ""
+
           for uid, gif in users.items():
               css += f'[data-user-id="{uid}"] img[class*="avatar"] {{ content: url("{gif}") !important; }}\n'
+
+          # decorations
+          with open('decorations.json') as f:
+              decorations = json.load(f)
+
+          for uid, image in decorations.items():
+              css += f'[data-user-id="{uid}"]::before {{ content: ""; background-image: url("{image}"); }}\n'
+
           with open('source.css', 'w') as f:
               f.write(css)
           EOF
+
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Update source.css"
